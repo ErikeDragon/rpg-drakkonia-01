@@ -4,47 +4,69 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Shifting Dungeons of Drakkonia</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app-shell">
       <section class="title-panel">
-        <p class="eyebrow">Old School Top-Down RPG Prototype</p>
-        <h1>The Shifting Dungeons of Drakkonia</h1>
-        <p class="byline">by Erik "eDragon" Lingerfelt</p>
-        <p class="subtitle">
-          Descend through a haunted, shifting ruin beneath Drakkonia, survive the maze,
-          and reach the stair to level 2.
-        </p>
+        <div class="title-topbar">
+          <div>
+            <p class="eyebrow" data-i18n="title.eyebrow">Old School Top-Down RPG Prototype</p>
+            <h1 data-i18n="title.main">The Shifting Dungeons of Drakkonia</h1>
+            <p class="byline" data-i18n="title.byline">by Erik "eDragon" Lingerfelt</p>
+            <p class="subtitle" data-i18n="title.subtitle">
+              Descend through a haunted, shifting ruin beneath Drakkonia, survive the maze,
+              and reach the stair to level 2.
+            </p>
+          </div>
+
+          <div class="lang-switch" aria-label="Language selector">
+            <button type="button" class="lang-btn active" data-lang-btn="en">EN</button>
+            <button type="button" class="lang-btn" data-lang-btn="pt">PT</button>
+          </div>
+        </div>
       </section>
 
       <section class="hud" aria-label="Player status">
         <div class="stat-card">
-          <span class="label">HP</span>
+          <span class="label" data-i18n="hud.hp">HP</span>
           <strong id="hpValue">12 / 12</strong>
         </div>
         <div class="stat-card">
-          <span class="label">Gold</span>
+          <span class="label" data-i18n="hud.gold">Gold</span>
           <strong id="goldValue">5</strong>
         </div>
         <div class="stat-card">
-          <span class="label">Weapon</span>
+          <span class="label" data-i18n="hud.weapon">Weapon</span>
           <strong id="weaponValue">Wood Sword</strong>
         </div>
         <div class="stat-card">
-          <span class="label">Armor</span>
+          <span class="label" data-i18n="hud.armor">Armor</span>
           <strong id="armorValue">None</strong>
         </div>
         <div class="stat-card">
-          <span class="label">Shield</span>
+          <span class="label" data-i18n="hud.shield">Shield</span>
           <strong id="shieldValue">None</strong>
         </div>
         <div class="stat-card">
-          <span class="label">Level</span>
+          <span class="label" data-i18n="hud.level">Level</span>
           <strong id="levelValue">1 · 0 / 10 XP</strong>
         </div>
         <div class="stat-card">
-          <span class="label">Depth</span>
+          <span class="label" data-i18n="hud.depth">Depth</span>
           <strong id="depthValue">Level 1</strong>
         </div>
       </section>
@@ -53,8 +75,8 @@
         <section class="story-panel">
           <div class="story-header">
             <div>
-              <p class="eyebrow">Story Log</p>
-              <h2>Level 1: The Shifting Halls</h2>
+              <p class="eyebrow" data-i18n="story.eyebrow">Story Log</p>
+              <h2 data-i18n="story.title">Level 1: The Shifting Halls</h2>
             </div>
             <p class="story-tip" id="storyTip">
               You only interact when you step onto the same tile as something.
@@ -65,11 +87,11 @@
 
           <section class="portrait-panel" aria-label="Current encounter display">
             <article class="portrait-card">
-              <p class="portrait-label">Hero</p>
+              <p class="portrait-label" data-i18n="portrait.heroLabel">Hero</p>
               <div class="portrait-frame">
                 <img id="heroPortrait" src="assets/sprites/hero.webp" alt="Hero portrait" />
               </div>
-              <strong class="portrait-name">Adventurer</strong>
+              <strong class="portrait-name" data-i18n="portrait.heroName">Adventurer</strong>
             </article>
 
             <article class="portrait-card">
@@ -97,19 +119,37 @@
           </div>
 
           <aside class="legend">
-            <h2>Controls</h2>
-            <p>`W A S D` to move</p>
-            <p>`F` fight, `R` retreat during encounters</p>
-            <p>Step onto a tile to interact</p>
+            <h2 data-i18n="legend.controlsTitle">Controls</h2>
+            <p data-i18n="legend.move">`W A S D` to move</p>
+            <p data-i18n="legend.fight">`F` fight, `R` retreat during encounters</p>
+            <p data-i18n="legend.interact">Step onto a tile to interact</p>
             <button id="musicToggle" class="legend-button" type="button">Mute Music</button>
-            <h2>Map Key</h2>
+            <a
+              id="backLink"
+              class="back-link"
+              href="https://edragondigital.com.br/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Back to main website
+            </a>
+            <h2 data-i18n="legend.mapTitle">Map Key</h2>
             <ul>
-              <li><span class="swatch wall"></span> Wall</li>
-              <li><span class="swatch floor"></span> Floor</li>
-              <li><span class="swatch market"></span> Market / Vendor</li>
-              <li><span class="swatch enemy"></span> Enemy</li>
-              <li><span class="swatch treasure"></span> Treasure</li>
-              <li><span class="swatch stairs"></span> Stairs to level 2</li>
+              <li><span class="swatch wall"></span> <span data-i18n="legend.wall">Wall</span></li>
+              <li><span class="swatch floor"></span> <span data-i18n="legend.floor">Floor</span></li>
+              <li>
+                <span class="swatch market"></span>
+                <span data-i18n="legend.market">Market / Vendor</span>
+              </li>
+              <li><span class="swatch enemy"></span> <span data-i18n="legend.enemy">Enemy</span></li>
+              <li>
+                <span class="swatch treasure"></span>
+                <span data-i18n="legend.treasure">Treasure</span>
+              </li>
+              <li>
+                <span class="swatch stairs"></span>
+                <span data-i18n="legend.stairs">Stairs to level 2</span>
+              </li>
             </ul>
           </aside>
         </section>

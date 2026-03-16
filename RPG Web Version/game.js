@@ -3,28 +3,531 @@ const VISION_RADIUS = 6;
 const MAP_WIDTH = 29;
 const MAP_HEIGHT = 23;
 const MINOR_ENEMY_IDS = new Set(["ratPack", "robber", "giantGoblin"]);
+const LANG_STORAGE_KEY = "drakkonia-language";
+
+let currentLanguage = "en";
+try {
+  const storedLanguage = window.localStorage.getItem(LANG_STORAGE_KEY);
+  if (storedLanguage === "en" || storedLanguage === "pt") {
+    currentLanguage = storedLanguage;
+  }
+} catch (error) {
+  currentLanguage = "en";
+}
+
+const TRANSLATIONS = {
+  en: {
+    title: {
+      eyebrow: "Old School Top-Down RPG Prototype",
+      main: "The Shifting Dungeons of Drakkonia",
+      byline: 'by Erik "eDragon" Lingerfelt',
+      subtitle:
+        "Descend through a haunted, shifting ruin beneath Drakkonia, survive the maze, and reach the stair to level 2.",
+    },
+    hud: {
+      hp: "HP",
+      gold: "Gold",
+      weapon: "Weapon",
+      armor: "Armor",
+      shield: "Shield",
+      level: "Level",
+      depth: "Depth",
+    },
+    story: {
+      eyebrow: "Story Log",
+      title: "Level 1: The Shifting Halls",
+      noticePrefix: "Notice:",
+    },
+    portrait: {
+      heroLabel: "Hero",
+      heroName: "Adventurer",
+    },
+    legend: {
+      controlsTitle: "Controls",
+      move: "`W A S D` to move",
+      fight: "`F` fight, `R` retreat during encounters",
+      interact: "Step onto a tile to interact",
+      muteMusic: "Mute Music",
+      unmuteMusic: "Unmute Music",
+      backLink: "Back to main website",
+      mapTitle: "Map Key",
+      wall: "Wall",
+      floor: "Floor",
+      market: "Market / Vendor",
+      enemy: "Enemy",
+      treasure: "Treasure",
+      stairs: "Stairs to level 2",
+    },
+    encounter: {
+      area: "Area",
+      market: "Market",
+      vendor: "Vendor",
+      enemy: "Enemy",
+      treasure: "Treasure",
+      exit: "Exit",
+      quietHall: "Quiet Hall",
+      entryChamber: "Entry Chamber",
+      dungeonLoot: "Dungeon Loot",
+      emberMarketStall: "Ember Market Stall",
+      ironmonger: "Ironmonger",
+      stairsToLevel2: "Stairs to Level 2",
+    },
+    ui: {
+      leave: "Leave",
+      fight: "Fight [F]",
+      retreat: "Retreat [R]",
+      respawn: "Respawn",
+      chooseItem: "{shop}: choose an item while you stand here.",
+      respawnPrompt: "You are down. Respawn to return to the entrance.",
+      encounterStatus: "{enemy}: {current} / {max} HP remaining. {specs}",
+      mimicStatus: "{enemy}: {current} / {max} HP remaining. {specs}. The mimic has trapped you. There is no escape.",
+    },
+    stats: {
+      hp: "HP",
+      atk: "ATK",
+      def: "DEF",
+      reward: "Reward",
+      xp: "XP",
+    },
+    equipment: {
+      none: "None",
+      woodSword: "Wood Sword",
+      leatherArmor: "Leather Armor",
+      buckler: "Buckler",
+      ironSword: "Iron Sword",
+    },
+    hudValues: {
+      depth: "Level {depth}",
+      level: "{level} · {xp} / {next} XP",
+    },
+    tips: {
+      interactOnly: "You only interact when you step onto the same tile as something.",
+      start:
+        "You began with a wood sword, no armor, no shield, and 5 gold. Shops only work when you stand on them.",
+      market: "You are standing on a market tile. Use the buttons below to buy gear.",
+      vendor: "You are standing on a vendor tile. Better weapons wait here.",
+      enemy: "A foe blocks the room. Review its stats, then choose to fight or flee.",
+      treasure: "Treasure is collected only when you land on its tile.",
+      stairs: "Level 1 ends here for now.",
+      explore: "Keep exploring. The deeper halls hold tougher enemies, richer treasure, and the way down.",
+      dungeonSicknessClaimed: "The Dungeon sickness claimed you. Respawn to face a shifted level.",
+      defeated: "You were defeated. Use Respawn to return to the start of level 1.",
+    },
+    messages: {
+      potionHeal: "You drink a potion and recover <strong>{gained}</strong> HP. Your breath steadies.",
+      leatherEquip:
+        "You strap on leather armor. The dungeon suddenly feels a little less eager to kill you.",
+      bucklerEquip: "You raise a round buckler and test its balance with your wood sword.",
+      ironSwordEquip:
+        "The smith hands you an iron sword. It bites the air with a sharper promise.",
+      needGold: "You need {cost} gold for {item}, but only have {gold}.",
+      leaveShop: "You step away from the stall and listen to the dungeon breathe around you.",
+      gainXp: "You gain <strong>{amount}</strong> XP.",
+      levelUp:
+        "Level up to <strong>{level}</strong>. Max HP rises to {maxHp} and your attacks grow stronger.",
+      encounterIntro:
+        "{intro} <strong>{enemy}</strong> stands before you. {specs}. Choose whether to fight or try to retreat. Shortcuts: <strong>F</strong> to fight, <strong>R</strong> to retreat.",
+      mimicIntro:
+        "{intro} <strong>{enemy}</strong> stands before you. {specs}. The mimic bars all escape. <strong>F</strong> to fight. There is no retreat.",
+      defeatGoldLoss:
+        "{context} You lost 3 gold. Press Respawn to return to the dungeon entrance.",
+      defeatByEnemy: "You were defeated by {enemy}.",
+      dungeonSicknessDeath:
+        "The Dungeon sickness gnaws through your strength. The stones whisper that the halls will not look the same when you rise again.",
+      dungeonSicknessKilled: "The Dungeon sickness killed you.",
+      mimicNoEscape:
+        "The mimic snaps its lid shut behind you. There is no retreat now, only the fight.",
+      fleeSuccess:
+        "You slip away from the {enemy} and fall back to the previous corridor before it can pin you down.",
+      fleeFail:
+        "You try to flee, but the {enemy} clips you for <strong>{taken}</strong> damage. {specs}. Fight or try fleeing again.",
+      guardedTreasure:
+        "The treasure glints in the dark, but its guardian still stalks the room. Beat the creature before you can claim it.",
+      mimicReveal:
+        "You reach for the chest and its hinges twist like jaws. The treasure was a mimic.",
+      looseCoins: "You scoop up a loose purse of coins worth <strong>{amount}</strong> gold.",
+      satchelCoins:
+        "A forgotten satchel yields <strong>{amount}</strong> gold and a torn trade map.",
+      emberChest:
+        "Inside the ember chest you find <strong>{reward}</strong> gold and an old charm that raises your max HP by 2.",
+      stairsReached:
+        "You descend to the sealed stair of level 2. Cold air rises from below, but this prototype ends at the threshold.",
+      moveWhileDown: "You are down. Use Respawn before trying to move again.",
+      moveWhileEncounter:
+        "The enemy is still in front of you. Choose Fight or Retreat before moving again.",
+      wallSickness:
+        "The Dungeon sickness is affecting you. You keep ramming the same wall and the stone feeds on your life. You'll die if you continue.",
+      wallBlock: "Stone blocks your way. The wall gives nothing back.",
+      introOne:
+        "You enter The Shifting Dungeons of Drakkonia with a wood sword, no armor, no shield, and only 5 gold. People in the market whisper that its halls change when they tire of a dying adventurer.",
+      introTwo:
+        "No two descents are quite the same, yet the dungeon remembers what was truly lost. Major monsters stay dead, spent treasure stays gone, and only lesser pests creep back through the shifting halls.",
+      battleWin:
+        "Round {round}: you strike for <strong>{dealt}</strong> and defeat the {enemy}. You collect <strong>{gold}</strong> gold. {xpText}",
+      battleContinue:
+        "Round {round}: you hit the {enemy} for <strong>{dealt}</strong>. It has <strong>{enemyHp}</strong> HP left and hits back for <strong>{taken}</strong>. Choose your next move.",
+      battleDeath:
+        "Round {round}: you hit the {enemy} for <strong>{dealt}</strong>, but it answers with <strong>{taken}</strong> and drops you.",
+      fleeDeath:
+        "You try to retreat, but the {enemy} lands <strong>{taken}</strong> damage before you can escape.",
+    },
+  },
+  pt: {
+    title: {
+      eyebrow: "Protótipo de RPG Top-Down Old School",
+      main: "As Masmorras Móveis de Drakkonia",
+      byline: 'por Erik "eDragon" Lingerfelt',
+      subtitle:
+        "Desça por uma ruína mutante e assombrada sob Drakkonia, sobreviva ao labirinto e alcance a escada para o nível 2.",
+    },
+    hud: {
+      hp: "HP",
+      gold: "Ouro",
+      weapon: "Arma",
+      armor: "Armadura",
+      shield: "Escudo",
+      level: "Nível",
+      depth: "Profundidade",
+    },
+    story: {
+      eyebrow: "Registro",
+      title: "Nível 1: Os Salões Móveis",
+      noticePrefix: "Aviso:",
+    },
+    portrait: {
+      heroLabel: "Herói",
+      heroName: "Aventureiro",
+    },
+    legend: {
+      controlsTitle: "Controles",
+      move: "`W A S D` para mover",
+      fight: "`F` luta, `R` recua durante encontros",
+      interact: "Pise no bloco para interagir",
+      muteMusic: "Silenciar Música",
+      unmuteMusic: "Ativar Música",
+      backLink: "Voltar ao site principal",
+      mapTitle: "Legenda do Mapa",
+      wall: "Parede",
+      floor: "Chão",
+      market: "Mercado / Vendedor",
+      enemy: "Inimigo",
+      treasure: "Tesouro",
+      stairs: "Escadas para o nível 2",
+    },
+    encounter: {
+      area: "Área",
+      market: "Mercado",
+      vendor: "Vendedor",
+      enemy: "Inimigo",
+      treasure: "Tesouro",
+      exit: "Saída",
+      quietHall: "Corredor Silencioso",
+      entryChamber: "Câmara de Entrada",
+      dungeonLoot: "Espólio da Masmorra",
+      emberMarketStall: "Banca das Brasas",
+      ironmonger: "Ferreiro",
+      stairsToLevel2: "Escadas para o Nível 2",
+    },
+    ui: {
+      leave: "Sair",
+      fight: "Lutar [F]",
+      retreat: "Recuar [R]",
+      respawn: "Renascer",
+      chooseItem: "{shop}: escolha um item enquanto estiver aqui.",
+      respawnPrompt: "Você caiu. Renasça para voltar à entrada.",
+      encounterStatus: "{enemy}: {current} / {max} de HP restantes. {specs}",
+      mimicStatus: "{enemy}: {current} / {max} de HP restantes. {specs}. O mímico prendeu você. Não há escapatória.",
+    },
+    stats: {
+      hp: "HP",
+      atk: "ATQ",
+      def: "DEF",
+      reward: "Recompensa",
+      xp: "XP",
+    },
+    equipment: {
+      none: "Nenhum",
+      woodSword: "Espada de Madeira",
+      leatherArmor: "Armadura de Couro",
+      buckler: "Broquel",
+      ironSword: "Espada de Ferro",
+    },
+    hudValues: {
+      depth: "Nível {depth}",
+      level: "{level} · {xp} / {next} XP",
+    },
+    tips: {
+      interactOnly: "Você só interage quando pisa exatamente no mesmo bloco de algo.",
+      start:
+        "Você começou com uma espada de madeira, sem armadura, sem escudo e com 5 moedas. As lojas só funcionam quando você está sobre elas.",
+      market: "Você está sobre um bloco de mercado. Use os botões abaixo para comprar equipamento.",
+      vendor: "Você está sobre um bloco de vendedor. Armas melhores esperam aqui.",
+      enemy: "Um inimigo bloqueia a sala. Veja seus atributos e então escolha lutar ou recuar.",
+      treasure: "Tesouros só são coletados quando você pisa no bloco deles.",
+      stairs: "O nível 1 termina aqui por enquanto.",
+      explore:
+        "Continue explorando. Os salões mais profundos guardam inimigos mais fortes, tesouros melhores e o caminho para baixo.",
+      dungeonSicknessClaimed:
+        "A doença da Masmorra venceu você. Renasça para enfrentar um nível alterado.",
+      defeated: "Você foi derrotado. Use Renascer para voltar ao início do nível 1.",
+    },
+    messages: {
+      potionHeal: "Você bebe uma poção e recupera <strong>{gained}</strong> de HP. Sua respiração se acalma.",
+      leatherEquip:
+        "Você veste a armadura de couro. A masmorra parece um pouco menos ansiosa para matar você.",
+      bucklerEquip:
+        "Você ergue um broquel redondo e testa o equilíbrio dele junto da espada de madeira.",
+      ironSwordEquip:
+        "O ferreiro lhe entrega uma espada de ferro. Ela corta o ar com uma promessa mais afiada.",
+      needGold: "Você precisa de {cost} de ouro para {item}, mas só tem {gold}.",
+      leaveShop:
+        "Você se afasta da banca e escuta a respiração da masmorra ao seu redor.",
+      gainXp: "Você ganha <strong>{amount}</strong> XP.",
+      levelUp:
+        "Subiu para o nível <strong>{level}</strong>. Seu HP máximo sobe para {maxHp} e seus ataques ficam mais fortes.",
+      encounterIntro:
+        "{intro} <strong>{enemy}</strong> fica diante de você. {specs}. Escolha lutar ou tentar recuar. Atalhos: <strong>F</strong> para lutar, <strong>R</strong> para recuar.",
+      mimicIntro:
+        "{intro} <strong>{enemy}</strong> fica diante de você. {specs}. O mímico bloqueia toda fuga. <strong>F</strong> para lutar. Não há recuo.",
+      defeatGoldLoss:
+        "{context} Você perdeu 3 moedas de ouro. Pressione Renascer para voltar à entrada da masmorra.",
+      defeatByEnemy: "Você foi derrotado por {enemy}.",
+      dungeonSicknessDeath:
+        "A doença da Masmorra rói suas forças. As pedras sussurram que os salões não parecerão os mesmos quando você se erguer de novo.",
+      dungeonSicknessKilled: "A doença da Masmorra matou você.",
+      mimicNoEscape:
+        "O mímico fecha a tampa atrás de você. Não existe recuo agora, apenas a luta.",
+      fleeSuccess:
+        "Você escapa do {enemy} e recua para o corredor anterior antes que ele consiga cercá-lo.",
+      fleeFail:
+        "Você tenta fugir, mas o {enemy} acerta <strong>{taken}</strong> de dano. {specs}. Lute ou tente fugir de novo.",
+      guardedTreasure:
+        "O tesouro brilha no escuro, mas seu guardião ainda ronda a sala. Derrote a criatura antes de pegá-lo.",
+      mimicReveal:
+        "Você alcança o baú e suas dobradiças se retorcem como mandíbulas. O tesouro era um mímico.",
+      looseCoins: "Você recolhe uma bolsa solta com <strong>{amount}</strong> moedas de ouro.",
+      satchelCoins:
+        "Uma sacola esquecida rende <strong>{amount}</strong> moedas de ouro e um mapa comercial rasgado.",
+      emberChest:
+        "Dentro do baú das brasas você encontra <strong>{reward}</strong> moedas de ouro e um velho amuleto que aumenta seu HP máximo em 2.",
+      stairsReached:
+        "Você chega à escada selada do nível 2. Um ar frio sobe lá de baixo, mas este protótipo termina neste limiar.",
+      moveWhileDown: "Você caiu. Use Renascer antes de tentar se mover novamente.",
+      moveWhileEncounter:
+        "O inimigo ainda está à sua frente. Escolha Lutar ou Recuar antes de tentar se mover de novo.",
+      wallSickness:
+        "A doença da Masmorra está afetando você. Você continua batendo na mesma parede e a pedra se alimenta da sua vida. Você vai morrer se continuar.",
+      wallBlock: "Pedra bloqueia seu caminho. A parede não devolve nada.",
+      introOne:
+        "Você entra nas Masmorras Móveis de Drakkonia com uma espada de madeira, sem armadura, sem escudo e apenas 5 moedas de ouro. As pessoas no mercado sussurram que os salões mudam quando se cansam de um aventureiro moribundo.",
+      introTwo:
+        "Nenhuma descida é exatamente igual, mas a masmorra se lembra do que foi realmente perdido. Grandes monstros continuam mortos, tesouros gastos continuam vazios, e apenas pestes menores rastejam de volta pelos salões mutantes.",
+      battleWin:
+        "Rodada {round}: você acerta <strong>{dealt}</strong> e derrota o {enemy}. Você coleta <strong>{gold}</strong> moedas de ouro. {xpText}",
+      battleContinue:
+        "Rodada {round}: você acerta o {enemy} em <strong>{dealt}</strong>. Ele ainda tem <strong>{enemyHp}</strong> de HP e revida com <strong>{taken}</strong>. Escolha seu próximo movimento.",
+      battleDeath:
+        "Rodada {round}: você acerta o {enemy} em <strong>{dealt}</strong>, mas ele responde com <strong>{taken}</strong> e derruba você.",
+      fleeDeath:
+        "Você tenta recuar, mas o {enemy} causa <strong>{taken}</strong> de dano antes que você consiga escapar.",
+    },
+  },
+};
+
+const ENEMY_LOCALIZATION = {
+  ratPack: {
+    name: { en: "Rat Pack", pt: "Matilha de Ratos" },
+    intro: {
+      en: "A twitching mass of dungeon rats spills out from the shadows.",
+      pt: "Uma massa convulsiva de ratos da masmorra escorre das sombras.",
+    },
+  },
+  robber: {
+    name: { en: "Robber", pt: "Ladrão" },
+    intro: {
+      en: "A desperate robber slips from behind a pillar with a knife already drawn.",
+      pt: "Um ladrão desesperado surge de trás de uma coluna com a faca já em punho.",
+    },
+  },
+  giantGoblin: {
+    name: { en: "Giant Goblin", pt: "Goblin Gigante" },
+    intro: {
+      en: "A giant goblin stamps forward, grinning as it spots your weak starting gear.",
+      pt: "Um goblin gigante avança batendo os pés, sorrindo ao ver seu equipamento fraco de início.",
+    },
+  },
+  cryptHound: {
+    name: { en: "Crypt Hound", pt: "Cão da Cripta" },
+    intro: {
+      en: "A crypt hound prowls low, red eyes shining in the dark.",
+      pt: "Um cão da cripta ronda rente ao chão, com olhos vermelhos brilhando no escuro.",
+    },
+  },
+  evilWizard: {
+    name: { en: "Evil Wizard", pt: "Mago Maligno" },
+    intro: {
+      en: "An evil wizard mutters a curse and lifts a crooked hand toward you.",
+      pt: "Um mago maligno murmura uma maldição e ergue uma mão torta em sua direção.",
+    },
+  },
+  earthMonster: {
+    name: { en: "Earth Monster", pt: "Monstro da Terra" },
+    intro: {
+      en: "Chunks of living earth grind together into a hulking monster ahead.",
+      pt: "Blocos de terra viva se esmagam uns contra os outros formando um monstro enorme adiante.",
+    },
+  },
+  skeletonKnight: {
+    name: { en: "Skeleton Knight", pt: "Cavaleiro Esqueleto" },
+    intro: {
+      en: "A skeleton knight lifts its ancient weapon with a dry hiss of bone.",
+      pt: "Um cavaleiro esqueleto ergue sua arma antiga com um seco sibilar de ossos.",
+    },
+  },
+  evilWarlock: {
+    name: { en: "Evil Warlock", pt: "Bruxo Maligno" },
+    intro: {
+      en: "An evil warlock narrows his eyes and opens a palm full of dark sparks.",
+      pt: "Um bruxo maligno estreita os olhos e abre a mão cheia de faíscas sombrias.",
+    },
+  },
+  ciclops: {
+    name: { en: "Ciclops", pt: "Ciclope" },
+    intro: {
+      en: "A snarling ciclops lumbers in, each step shaking dust from the ceiling.",
+      pt: "Um ciclope rosnando avança pesadamente, cada passo sacudindo poeira do teto.",
+    },
+  },
+  armoredOgre: {
+    name: { en: "Armored Ogre", pt: "Ogro Blindado" },
+    intro: {
+      en: "An armored ogre plants itself before the stair, armored plates clanging in warning.",
+      pt: "Um ogro blindado se planta diante da escada, com as placas de armadura tilintando em aviso.",
+    },
+  },
+  mimic: {
+    name: { en: "Mimic", pt: "Mímico" },
+    intro: {
+      en: "The chest splits open into rows of teeth. It was a mimic all along.",
+      pt: "O baú se abre em fileiras de dentes. Era um mímico o tempo todo.",
+    },
+  },
+};
+
+const SHOP_LOCALIZATION = {
+  market: {
+    name: { en: "Ember Market Stall", pt: "Banca das Brasas" },
+    intro: {
+      en: "A lantern-lit stall is somehow still open. The merchant bows and says, 'Buy only what you can carry back alive.'",
+      pt: "Uma banca iluminada por lanternas ainda está aberta de algum jeito. O mercador faz uma reverência e diz: 'Compre apenas o que conseguir levar de volta com vida.'",
+    },
+  },
+  vendor: {
+    name: { en: "Ironmonger", pt: "Ferreiro" },
+    intro: {
+      en: "A soot-covered smith leans over a cracked anvil. 'Wood sword, eh? Let me fix that.'",
+      pt: "Um ferreiro coberto de fuligem se inclina sobre uma bigorna rachada. 'Espada de madeira, é? Deixe eu resolver isso.'",
+    },
+  },
+};
+
+const ITEM_LOCALIZATION = {
+  potion: {
+    label: { en: "Potion", pt: "Poção" },
+    description: { en: "Restore 6 HP", pt: "Recupera 6 de HP" },
+  },
+  leather: {
+    label: { en: "Leather Armor", pt: "Armadura de Couro" },
+    description: { en: "+1 armor", pt: "+1 armadura" },
+  },
+  buckler: {
+    label: { en: "Buckler", pt: "Broquel" },
+    description: { en: "+1 shield", pt: "+1 escudo" },
+  },
+  ironSword: {
+    label: { en: "Iron Sword", pt: "Espada de Ferro" },
+    description: { en: "+2 weapon power", pt: "+2 poder de arma" },
+  },
+};
+
+const EQUIPMENT_LOCALIZATION = {
+  None: { en: "None", pt: "Nenhum" },
+  "Wood Sword": { en: "Wood Sword", pt: "Espada de Madeira" },
+  "Leather Armor": { en: "Leather Armor", pt: "Armadura de Couro" },
+  Buckler: { en: "Buckler", pt: "Broquel" },
+  "Iron Sword": { en: "Iron Sword", pt: "Espada de Ferro" },
+};
+
+function getTranslation(path) {
+  return path.split(".").reduce((value, part) => value?.[part], TRANSLATIONS[currentLanguage]);
+}
+
+function interpolate(template, vars = {}) {
+  return String(template).replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? ""));
+}
+
+function t(path, vars = {}) {
+  const value = getTranslation(path) ?? path;
+  return typeof value === "function" ? value(vars) : interpolate(value, vars);
+}
+
+function localize(value) {
+  if (value && typeof value === "object" && ("en" in value || "pt" in value)) {
+    return value[currentLanguage] ?? value.en ?? "";
+  }
+
+  return value;
+}
+
+function translateEquipmentName(name) {
+  return localize(EQUIPMENT_LOCALIZATION[name]) || name;
+}
+
+function getEnemyName(enemyId) {
+  return localize(ENEMY_LOCALIZATION[enemyId]?.name) || ENEMIES[enemyId].name;
+}
+
+function getEnemyIntro(enemyId) {
+  return localize(ENEMY_LOCALIZATION[enemyId]?.intro) || ENEMIES[enemyId].intro;
+}
+
+function getShopName(type) {
+  return localize(SHOP_LOCALIZATION[type]?.name) || SHOP_CATALOG[type].name;
+}
+
+function getShopIntro(type) {
+  return localize(SHOP_LOCALIZATION[type]?.intro) || SHOP_CATALOG[type].intro;
+}
+
+function getItemLabel(itemKey) {
+  return localize(ITEM_LOCALIZATION[itemKey]?.label) || itemKey;
+}
+
+function getItemDescription(itemKey) {
+  return localize(ITEM_LOCALIZATION[itemKey]?.description) || "";
+}
 
 const TILE_TYPES = {
-  "#": { kind: "wall", baseColor: "#33414c" },
-  ".": { kind: "floor", baseColor: "#5f584b" },
-  S: { kind: "start", baseColor: "#56794d" },
-  D: { kind: "stairs", baseColor: "#5a86d7" },
-  M: { kind: "market", baseColor: "#b87934" },
-  m: { kind: "vendor", baseColor: "#c18a3e" },
-  T: { kind: "treasure", baseColor: "#d0af47" },
-  t: { kind: "treasure", baseColor: "#be9a34" },
-  g: { kind: "gold", baseColor: "#c8b65d" },
-  r: { kind: "enemy", enemyId: "ratPack", baseColor: "#8b5c3f" },
-  b: { kind: "enemy", enemyId: "robber", baseColor: "#776257" },
-  q: { kind: "enemy", enemyId: "giantGoblin", baseColor: "#5e9b45" },
-  h: { kind: "enemy", enemyId: "cryptHound", baseColor: "#7d4f48" },
-  z: { kind: "enemy", enemyId: "evilWizard", baseColor: "#824341" },
-  e: { kind: "enemy", enemyId: "earthMonster", baseColor: "#7d6543" },
-  s: { kind: "enemy", enemyId: "skeletonKnight", baseColor: "#b7b0a2" },
-  w: { kind: "enemy", enemyId: "evilWarlock", baseColor: "#546b98" },
-  c: { kind: "enemy", enemyId: "ciclops", baseColor: "#a35b46" },
-  o: { kind: "enemy", enemyId: "armoredOgre", baseColor: "#5f7c6c" },
-  x: { kind: "enemy", enemyId: "mimic", baseColor: "#9b7a39" },
+  "#": { kind: "wall", baseColor: "#17211c" },
+  ".": { kind: "floor", baseColor: "#243129" },
+  S: { kind: "start", baseColor: "#10b981" },
+  D: { kind: "stairs", baseColor: "#0ea5a4" },
+  M: { kind: "market", baseColor: "#0f8f63" },
+  m: { kind: "vendor", baseColor: "#13a06f" },
+  T: { kind: "treasure", baseColor: "#d4a017" },
+  t: { kind: "treasure", baseColor: "#b98912" },
+  g: { kind: "gold", baseColor: "#d6b24a" },
+  r: { kind: "enemy", enemyId: "ratPack", baseColor: "#5b3a2b" },
+  b: { kind: "enemy", enemyId: "robber", baseColor: "#4b3a34" },
+  q: { kind: "enemy", enemyId: "giantGoblin", baseColor: "#3d6a3a" },
+  h: { kind: "enemy", enemyId: "cryptHound", baseColor: "#6a3d36" },
+  z: { kind: "enemy", enemyId: "evilWizard", baseColor: "#6b2f31" },
+  e: { kind: "enemy", enemyId: "earthMonster", baseColor: "#6e5630" },
+  s: { kind: "enemy", enemyId: "skeletonKnight", baseColor: "#889289" },
+  w: { kind: "enemy", enemyId: "evilWarlock", baseColor: "#35546d" },
+  c: { kind: "enemy", enemyId: "ciclops", baseColor: "#8b4630" },
+  o: { kind: "enemy", enemyId: "armoredOgre", baseColor: "#39584a" },
+  x: { kind: "enemy", enemyId: "mimic", baseColor: "#8f6b1e" },
 };
 
 const ENEMY_SYMBOLS = {
@@ -373,6 +876,8 @@ let dungeonLoopStarted = false;
 let dungeonLoopTimer = null;
 let musicMuted = false;
 let musicGainNode = null;
+let storyTipState = { key: "tips.interactOnly", vars: {} };
+let deathNoticeState = null;
 
 let startPosition = { x: 1, y: 1 };
 
@@ -418,6 +923,8 @@ const encounterName = document.getElementById("encounterName");
 const encounterPortrait = document.getElementById("encounterPortrait");
 const encounterFallback = document.getElementById("encounterFallback");
 const musicToggle = document.getElementById("musicToggle");
+const translatableNodes = document.querySelectorAll("[data-i18n]");
+const langButtons = document.querySelectorAll("[data-lang-btn]");
 
 function getAudioContext() {
   const AudioCtor = window.AudioContext || window.webkitAudioContext;
@@ -434,6 +941,102 @@ function getAudioContext() {
   }
 
   return audioContext;
+}
+
+function setStoryTip(key, vars = {}) {
+  storyTipState = { key, vars };
+  storyTip.textContent = t(key, vars);
+}
+
+function refreshStoryTip() {
+  if (!storyTipState) {
+    return;
+  }
+
+  storyTip.textContent = t(storyTipState.key, storyTipState.vars);
+}
+
+function refreshMusicToggleLabel() {
+  musicToggle.textContent = musicMuted ? t("legend.unmuteMusic") : t("legend.muteMusic");
+}
+
+function applyStaticTranslations() {
+  translatableNodes.forEach((node) => {
+    node.textContent = t(node.dataset.i18n);
+  });
+
+  document.documentElement.lang = currentLanguage;
+  document.title = t("title.main");
+  refreshStoryTip();
+  refreshMusicToggleLabel();
+  langButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.langBtn === currentLanguage);
+  });
+}
+
+function refreshLanguageState() {
+  applyStaticTranslations();
+  updateHud();
+
+  if (deathNoticeState) {
+    deathNotice.textContent = t(deathNoticeState.key, deathNoticeState.vars);
+  }
+
+  if (!tileState.size) {
+    return;
+  }
+
+  if (pendingEncounter) {
+    setEncounterDisplay(t("encounter.enemy"), getEnemyName(pendingEncounter.enemyId), pendingEncounter.enemyId);
+    setEncounterActions();
+    return;
+  }
+
+  if (awaitingRespawn) {
+    setRespawnAction();
+    return;
+  }
+
+  const record = getTileRecord(player.x, player.y);
+  if (!record) {
+    return;
+  }
+
+  updateEncounterDisplay(record.symbol, record.consumed);
+  const kind = getTileKind(record.consumed ? "." : record.symbol).kind;
+  if (kind === "market") {
+    openShop("market");
+    return;
+  }
+
+  if (kind === "vendor") {
+    openShop("vendor");
+    return;
+  }
+
+  if (kind !== "enemy") {
+    clearActions();
+  }
+}
+
+function setupLanguageToggle() {
+  langButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const { langBtn } = button.dataset;
+      if (langBtn !== "en" && langBtn !== "pt") {
+        return;
+      }
+
+      currentLanguage = langBtn;
+      try {
+        window.localStorage.setItem(LANG_STORAGE_KEY, currentLanguage);
+      } catch (error) {
+        // Ignore storage issues and keep the in-memory language.
+      }
+      refreshLanguageState();
+      draw();
+    });
+  });
 }
 
 function getMusicGainNode() {
@@ -717,7 +1320,7 @@ function startDungeonLoop() {
 }
 
 function updateMusicToggleLabel() {
-  musicToggle.textContent = musicMuted ? "Unmute Music" : "Mute Music";
+  refreshMusicToggleLabel();
 }
 
 function toggleMusicMute() {
@@ -920,7 +1523,7 @@ function spawnMinorReplacementsFor(enemy) {
 function addStory(text, tone = "neutral") {
   storyLog.innerHTML = "";
   const item = document.createElement("li");
-  const strong = tone === "important" ? "<strong>Notice:</strong> " : "";
+  const strong = tone === "important" ? `<strong>${t("story.noticePrefix")}</strong> ` : "";
   item.innerHTML = `${strong}${text}`;
   storyLog.appendChild(item);
 }
@@ -952,19 +1555,25 @@ function setActions(title, actions) {
 function updateHud() {
   hpValue.textContent = `${player.hp} / ${player.maxHp}`;
   goldValue.textContent = String(player.gold);
-  weaponValue.textContent = player.weapon;
-  armorValue.textContent = player.armor;
-  shieldValue.textContent = player.shield;
-  levelValue.textContent = `${player.level} · ${player.xp} / ${player.nextLevelXp} XP`;
-  depthValue.textContent = `Level ${player.depth}`;
+  weaponValue.textContent = translateEquipmentName(player.weapon);
+  armorValue.textContent = translateEquipmentName(player.armor);
+  shieldValue.textContent = translateEquipmentName(player.shield);
+  levelValue.textContent = t("hudValues.level", {
+    level: player.level,
+    xp: player.xp,
+    next: player.nextLevelXp,
+  });
+  depthValue.textContent = t("hudValues.depth", { depth: player.depth });
 }
 
-function showDeathNotice(text) {
-  deathNotice.textContent = text;
+function showDeathNotice(key, vars = {}) {
+  deathNoticeState = { key, vars };
+  deathNotice.textContent = t(key, vars);
   deathNotice.style.display = "block";
 }
 
 function clearDeathNotice() {
+  deathNoticeState = null;
   deathNotice.textContent = "";
   deathNotice.style.display = "none";
 }
@@ -1025,7 +1634,12 @@ function setEncounterDisplay(label, name, spriteId = null, fallbackText = name) 
 
 function updateEncounterDisplay(symbol, consumed = false) {
   if (consumed) {
-    setEncounterDisplay("Area", "Quiet Hall", null, "Quiet Hall");
+    setEncounterDisplay(
+      t("encounter.area"),
+      t("encounter.quietHall"),
+      null,
+      t("encounter.quietHall")
+    );
     return;
   }
 
@@ -1033,40 +1647,56 @@ function updateEncounterDisplay(symbol, consumed = false) {
   const { kind } = tileType;
 
   if (kind === "market") {
-    setEncounterDisplay("Market", "Ember Market Stall", "market");
+    setEncounterDisplay(
+      t("encounter.market"),
+      t("encounter.emberMarketStall"),
+      "market"
+    );
     return;
   }
 
   if (kind === "vendor") {
-    setEncounterDisplay("Vendor", "Ironmonger", "vendor");
+    setEncounterDisplay(t("encounter.vendor"), t("encounter.ironmonger"), "vendor");
     return;
   }
 
   if (kind === "enemy") {
-    setEncounterDisplay("Enemy", ENEMIES[tileType.enemyId].name, tileType.enemyId);
+    setEncounterDisplay(t("encounter.enemy"), getEnemyName(tileType.enemyId), tileType.enemyId);
     return;
   }
 
   if (kind === "treasure" || kind === "gold") {
-    setEncounterDisplay("Treasure", "Dungeon Loot", "treasure");
+    setEncounterDisplay(t("encounter.treasure"), t("encounter.dungeonLoot"), "treasure");
     return;
   }
 
   if (kind === "stairs") {
-    setEncounterDisplay("Exit", "Stairs to Level 2", "stairs");
+    setEncounterDisplay(t("encounter.exit"), t("encounter.stairsToLevel2"), "stairs");
     return;
   }
 
   if (kind === "start") {
-    setEncounterDisplay("Area", "Entry Chamber", null, "Entry Chamber");
+    setEncounterDisplay(
+      t("encounter.area"),
+      t("encounter.entryChamber"),
+      null,
+      t("encounter.entryChamber")
+    );
     return;
   }
 
-  setEncounterDisplay("Area", "Quiet Hall", null, "Quiet Hall");
+  setEncounterDisplay(
+    t("encounter.area"),
+    t("encounter.quietHall"),
+    null,
+    t("encounter.quietHall")
+  );
 }
 
 function formatEnemySpecs(enemy) {
-  return `HP ${enemy.hp} | ATK ${enemy.attackMin}-${enemy.attackMax} | DEF ${enemy.defense} | Reward ${enemy.gold}g | XP ${enemy.xp}`;
+  return `${t("stats.hp")} ${enemy.hp} | ${t("stats.atk")} ${enemy.attackMin}-${enemy.attackMax} | ${t(
+    "stats.def"
+  )} ${enemy.defense} | ${t("stats.reward")} ${enemy.gold}g | ${t("stats.xp")} ${enemy.xp}`;
 }
 
 function preloadSprites() {
@@ -1259,10 +1889,7 @@ function heal(amount) {
 function applyPurchase(itemKey) {
   if (itemKey === "potion") {
     const gained = heal(6);
-    addStory(
-      `You drink a potion and recover <strong>${gained}</strong> HP. Your breath steadies.`,
-      "important"
-    );
+    addStory(t("messages.potionHeal", { gained }), "important");
     updateHud();
     draw();
     return;
@@ -1272,9 +1899,7 @@ function applyPurchase(itemKey) {
     player.armor = "Leather Armor";
     player.armorDefense = 1;
     player.purchased.add(itemKey);
-    addStory(
-      "You strap on leather armor. The dungeon suddenly feels a little less eager to kill you."
-    );
+    addStory(t("messages.leatherEquip"));
     updateHud();
     return;
   }
@@ -1283,7 +1908,7 @@ function applyPurchase(itemKey) {
     player.shield = "Buckler";
     player.shieldDefense = 1;
     player.purchased.add(itemKey);
-    addStory("You raise a round buckler and test its balance with your wood sword.");
+    addStory(t("messages.bucklerEquip"));
     updateHud();
     return;
   }
@@ -1292,22 +1917,28 @@ function applyPurchase(itemKey) {
     player.weapon = "Iron Sword";
     player.weaponPower = 4;
     player.purchased.add(itemKey);
-    addStory("The smith hands you an iron sword. It bites the air with a sharper promise.");
+    addStory(t("messages.ironSwordEquip"));
     updateHud();
   }
 }
 
 function openShop(type) {
   const shop = SHOP_CATALOG[type];
-  addStory(shop.intro, "important");
+  addStory(getShopIntro(type), "important");
 
   const actions = shop.items
     .filter((item) => !(item.oneTime && player.purchased.has(item.key)))
     .map((item) => ({
-      label: `${item.label} (${item.cost}g)`,
+      label: `${getItemLabel(item.key)} (${item.cost}g)`,
       onClick: () => {
         if (player.gold < item.cost) {
-          addStory(`You need ${item.cost} gold for ${item.label}, but only have ${player.gold}.`);
+          addStory(
+            t("messages.needGold", {
+              cost: item.cost,
+              item: getItemLabel(item.key),
+              gold: player.gold,
+            })
+          );
           return;
         }
         player.gold -= item.cost;
@@ -1318,14 +1949,14 @@ function openShop(type) {
     }));
 
   actions.push({
-    label: "Leave",
+    label: t("ui.leave"),
     onClick: () => {
       clearActions();
-      addStory("You step away from the stall and listen to the dungeon breathe around you.");
+      addStory(t("messages.leaveShop"));
     },
   });
 
-  setActions(`${shop.name}: choose an item while you stand here.`, actions);
+  setActions(t("ui.chooseItem", { shop: getShopName(type) }), actions);
 }
 
 function enemyAttack(enemy) {
@@ -1338,7 +1969,7 @@ function playerAttack() {
 
 function gainExperience(amount) {
   player.xp += amount;
-  const notes = [`You gain <strong>${amount}</strong> XP.`];
+  const notes = [t("messages.gainXp", { amount })];
   let leveledUp = false;
 
   while (player.xp >= player.nextLevelXp) {
@@ -1349,9 +1980,7 @@ function gainExperience(amount) {
     player.hp = player.maxHp;
     player.nextLevelXp = Math.ceil(player.nextLevelXp * 1.55);
     leveledUp = true;
-    notes.push(
-      `Level up to <strong>${player.level}</strong>. Max HP rises to ${player.maxHp} and your attacks grow stronger.`
-    );
+    notes.push(t("messages.levelUp", { level: player.level, maxHp: player.maxHp }));
   }
 
   updateHud();
@@ -1366,9 +1995,10 @@ function setEncounterActions() {
   }
 
   const enemy = ENEMIES[pendingEncounter.enemyId];
+  const enemyName = getEnemyName(pendingEncounter.enemyId);
   const actions = [
     {
-      label: "Fight [F]",
+      label: t("ui.fight"),
       onClick: () => {
         battleRound();
       },
@@ -1376,12 +2006,22 @@ function setEncounterActions() {
   ];
   const intro =
     pendingEncounter.sourceType === "mimic"
-      ? `${enemy.name}: ${pendingEncounter.enemyHp} / ${enemy.hp} HP remaining. ${formatEnemySpecs(enemy)}. The mimic has trapped you. There is no escape.`
-      : `${enemy.name}: ${pendingEncounter.enemyHp} / ${enemy.hp} HP remaining. ${formatEnemySpecs(enemy)}`;
+      ? t("ui.mimicStatus", {
+          enemy: enemyName,
+          current: pendingEncounter.enemyHp,
+          max: enemy.hp,
+          specs: formatEnemySpecs(enemy),
+        })
+      : t("ui.encounterStatus", {
+          enemy: enemyName,
+          current: pendingEncounter.enemyHp,
+          max: enemy.hp,
+          specs: formatEnemySpecs(enemy),
+        });
 
   if (pendingEncounter.sourceType !== "mimic") {
     actions.push({
-      label: "Retreat [R]",
+      label: t("ui.retreat"),
       onClick: () => {
         attemptFlee();
       },
@@ -1392,9 +2032,9 @@ function setEncounterActions() {
 }
 
 function setRespawnAction() {
-  setActions("You are down. Respawn to return to the entrance.", [
+  setActions(t("ui.respawnPrompt"), [
     {
-      label: "Respawn",
+      label: t("ui.respawn"),
       onClick: () => {
         respawnPlayer();
       },
@@ -1409,12 +2049,9 @@ function handleDungeonSicknessDeath() {
   clearActions();
   clearHeroLevelupTimeout();
   refreshHeroPortrait();
-  addStory(
-    "The Dungeon sickness gnaws through your strength. The stones whisper that the halls will not look the same when you rise again.",
-    "important"
-  );
-  storyTip.textContent = "The Dungeon sickness claimed you. Respawn to face a shifted level.";
-  showDeathNotice("The Dungeon sickness killed you.");
+  addStory(t("messages.dungeonSicknessDeath"), "important");
+  setStoryTip("tips.dungeonSicknessClaimed");
+  showDeathNotice("messages.dungeonSicknessKilled");
   setRespawnAction();
   updateHud();
   draw();
@@ -1422,7 +2059,8 @@ function handleDungeonSicknessDeath() {
 
 function presentEncounter(enemyId, x, y, fromPosition, enemyKey = null, sourceType = "enemy") {
   const baseEnemy = ENEMIES[enemyId];
-  setEncounterDisplay("Enemy", baseEnemy.name, enemyId);
+  const enemyName = getEnemyName(enemyId);
+  setEncounterDisplay(t("encounter.enemy"), enemyName, enemyId);
   pendingEncounter = {
     enemyId,
     x,
@@ -1436,19 +2074,17 @@ function presentEncounter(enemyId, x, y, fromPosition, enemyKey = null, sourceTy
   };
   playEncounterSound();
   addStory(
-    `${baseEnemy.intro} <strong>${baseEnemy.name}</strong> stands before you. ${formatEnemySpecs(
-      baseEnemy
-    )}.${
-      sourceType === "mimic"
-        ? " The mimic bars all escape. <strong>F</strong> to fight. There is no retreat."
-        : " Choose whether to fight or try to retreat. Shortcuts: <strong>F</strong> to fight, <strong>R</strong> to retreat."
-    }`,
+    t(sourceType === "mimic" ? "messages.mimicIntro" : "messages.encounterIntro", {
+      intro: getEnemyIntro(enemyId),
+      enemy: enemyName,
+      specs: formatEnemySpecs(baseEnemy),
+    }),
     "important"
   );
   setEncounterActions();
 }
 
-function handlePlayerDefeat(enemy, contextText) {
+function handlePlayerDefeat(enemy, contextText, enemyId) {
   playDeathSound();
   awaitingRespawn = true;
   pendingEncounter = null;
@@ -1457,9 +2093,9 @@ function handlePlayerDefeat(enemy, contextText) {
   clearActions();
   clearHeroLevelupTimeout();
   refreshHeroPortrait();
-  addStory(`${contextText} You lost 3 gold. Press Respawn to return to the dungeon entrance.`, "important");
-  storyTip.textContent = "You were defeated. Use Respawn to return to the start of level 1.";
-  showDeathNotice(`You were defeated by ${enemy.name}.`);
+  addStory(t("messages.defeatGoldLoss", { context: contextText }), "important");
+  setStoryTip("tips.defeated");
+  showDeathNotice("messages.defeatByEnemy", { enemy: getEnemyName(enemyId) });
   setRespawnAction();
   updateHud();
   draw();
@@ -1599,7 +2235,13 @@ function battleRound() {
       showLevelupPortrait();
     }
     addStory(
-      `Round ${round}: you strike for <strong>${dealt}</strong> and defeat the ${enemy.name}. You collect <strong>${enemy.gold}</strong> gold. ${xpResult.text}`,
+      t("messages.battleWin", {
+        round,
+        dealt,
+        enemy: getEnemyName(encounter.enemyId),
+        gold: enemy.gold,
+        xpText: xpResult.text,
+      }),
       "important"
     );
     updateEncounterDisplay(mapData[encounter.y][encounter.x], true);
@@ -1616,13 +2258,25 @@ function battleRound() {
   if (player.hp <= 0) {
     handlePlayerDefeat(
       enemy,
-      `Round ${round}: you hit the ${enemy.name} for <strong>${dealt}</strong>, but it answers with <strong>${taken}</strong> and drops you.`
+      t("messages.battleDeath", {
+        round,
+        dealt,
+        taken,
+        enemy: getEnemyName(encounter.enemyId),
+      }),
+      encounter.enemyId
     );
     return;
   }
 
   addStory(
-    `Round ${round}: you hit the ${enemy.name} for <strong>${dealt}</strong>. It has <strong>${encounter.enemyHp}</strong> HP left and hits back for <strong>${taken}</strong>. Choose your next move.`,
+    t("messages.battleContinue", {
+      round,
+      dealt,
+      enemy: getEnemyName(encounter.enemyId),
+      enemyHp: encounter.enemyHp,
+      taken,
+    }),
     "important"
   );
   setEncounterActions();
@@ -1636,7 +2290,7 @@ function attemptFlee() {
   }
 
   if (pendingEncounter.sourceType === "mimic") {
-    addStory("The mimic snaps its lid shut behind you. There is no retreat now, only the fight.", "important");
+    addStory(t("messages.mimicNoEscape"), "important");
     setEncounterActions();
     return;
   }
@@ -1657,10 +2311,7 @@ function attemptFlee() {
     if (escapedFromRoom && (!fallbackRoom || fallbackRoom.id !== escapedFromRoom.id)) {
       resetRoomEnemies(escapedFromRoom.id);
     }
-    addStory(
-      `You slip away from the ${enemy.name} and fall back to the previous corridor before it can pin you down.`,
-      "important"
-    );
+    addStory(t("messages.fleeSuccess", { enemy: getEnemyName(pendingEncounter.enemyId) }), "important");
     handleTile();
     updateHud();
     draw();
@@ -1674,15 +2325,18 @@ function attemptFlee() {
   if (player.hp <= 0) {
     handlePlayerDefeat(
       enemy,
-      `You try to retreat, but the ${enemy.name} lands <strong>${taken}</strong> damage before you can escape.`
+      t("messages.fleeDeath", { enemy: getEnemyName(pendingEncounter.enemyId), taken }),
+      pendingEncounter.enemyId
     );
     return;
   }
 
   addStory(
-    `You try to flee, but the ${enemy.name} clips you for <strong>${taken}</strong> damage. ${formatEnemySpecs(
-      enemy
-    )}. Fight or try fleeing again.`,
+    t("messages.fleeFail", {
+      enemy: getEnemyName(pendingEncounter.enemyId),
+      taken,
+      specs: formatEnemySpecs(enemy),
+    }),
     "important"
   );
   setEncounterActions();
@@ -1697,10 +2351,7 @@ function openTreasure(symbol, x, y) {
   }
 
   if (record.guardRoomId && roomHasAliveEnemies(record.guardRoomId)) {
-    addStory(
-      "The treasure glints in the dark, but its guardian still stalks the room. Beat the creature before you can claim it.",
-      "important"
-    );
+    addStory(t("messages.guardedTreasure"), "important");
     return;
   }
 
@@ -1708,10 +2359,7 @@ function openTreasure(symbol, x, y) {
     if (record.key) {
       persistentResolvedChests.add(record.key);
     }
-    addStory(
-      "You reach for the chest and its hinges twist like jaws. The treasure was a mimic.",
-      "important"
-    );
+    addStory(t("messages.mimicReveal"), "important");
     presentEncounter(record.mimicEnemyId, x, y, lastPlayerPosition, null, "mimic");
     return;
   }
@@ -1719,20 +2367,17 @@ function openTreasure(symbol, x, y) {
   if (symbol === "g") {
     const amount = randomInt(3, 6);
     player.gold += amount;
-    addStory(`You scoop up a loose purse of coins worth <strong>${amount}</strong> gold.`);
+    addStory(t("messages.looseCoins", { amount }));
   } else if (symbol === "t") {
     const amount = randomInt(5, 8);
     player.gold += amount;
-    addStory(`A forgotten satchel yields <strong>${amount}</strong> gold and a torn trade map.`);
+    addStory(t("messages.satchelCoins", { amount }));
   } else {
     const reward = randomInt(8, 12);
     player.gold += reward;
     player.maxHp += 2;
     player.hp = Math.min(player.maxHp, player.hp + 2);
-    addStory(
-      `Inside the ember chest you find <strong>${reward}</strong> gold and an old charm that raises your max HP by 2.`,
-      "important"
-    );
+    addStory(t("messages.emberChest", { reward }), "important");
   }
 
   setTileRecord(x, y, { symbol, consumed: true });
@@ -1754,25 +2399,24 @@ function handleTile(fromPosition = { x: player.x, y: player.y }) {
   }
 
   if (kind === "start") {
-    storyTip.textContent =
-      "You began with a wood sword, no armor, no shield, and 5 gold. Shops only work when you stand on them.";
+    setStoryTip("tips.start");
     return;
   }
 
   if (kind === "market") {
-    storyTip.textContent = "You are standing on a market tile. Use the buttons below to buy gear.";
+    setStoryTip("tips.market");
     openShop("market");
     return;
   }
 
   if (kind === "vendor") {
-    storyTip.textContent = "You are standing on a vendor tile. Better weapons wait here.";
+    setStoryTip("tips.vendor");
     openShop("vendor");
     return;
   }
 
   if (kind === "enemy") {
-    storyTip.textContent = "A foe blocks the room. Review its stats, then choose to fight or flee.";
+    setStoryTip("tips.enemy");
     const roomEnemy = getEnemyAt(player.x, player.y);
     presentEncounter(
       getTileKind(symbol).enemyId,
@@ -1785,24 +2429,20 @@ function handleTile(fromPosition = { x: player.x, y: player.y }) {
   }
 
   if (kind === "gold" || kind === "treasure") {
-    storyTip.textContent = "Treasure is collected only when you land on its tile.";
+    setStoryTip("tips.treasure");
     openTreasure(symbol, player.x, player.y);
     draw();
     return;
   }
 
   if (kind === "stairs") {
-    storyTip.textContent = "Level 1 ends here for now.";
+    setStoryTip("tips.stairs");
     clearActions();
-    addStory(
-      "You descend to the sealed stair of level 2. Cold air rises from below, but this prototype ends at the threshold.",
-      "important"
-    );
+    addStory(t("messages.stairsReached"), "important");
     return;
   }
 
-  storyTip.textContent =
-    "Keep exploring. The deeper halls hold tougher enemies, richer treasure, and the way down.";
+  setStoryTip("tips.explore");
 }
 
 function movePlayer(dx, dy) {
@@ -1813,13 +2453,13 @@ function movePlayer(dx, dy) {
   refreshHeroPortrait();
 
   if (awaitingRespawn) {
-    addStory("You are down. Use Respawn before trying to move again.", "important");
+    addStory(t("messages.moveWhileDown"), "important");
     setRespawnAction();
     return;
   }
 
   if (pendingEncounter) {
-    addStory("The enemy is still in front of you. Choose Fight or Retreat before moving again.", "important");
+    addStory(t("messages.moveWhileEncounter"), "important");
     setEncounterActions();
     return;
   }
@@ -1844,12 +2484,9 @@ function movePlayer(dx, dy) {
         return;
       }
 
-      addStory(
-        "The Dungeon sickness is affecting you. You keep ramming the same wall and the stone feeds on your life. You'll die if you continue.",
-        "important"
-      );
+      addStory(t("messages.wallSickness"), "important");
     } else {
-      addStory("Stone blocks your way. The wall gives nothing back.");
+      addStory(t("messages.wallBlock"));
     }
     draw();
     return;
@@ -1972,16 +2609,14 @@ function init() {
   findStart();
   lastPlayerPosition = { x: player.x, y: player.y };
   preloadSprites();
+  applyStaticTranslations();
   updateHud();
   setupKeyboard();
   setupMusicToggle();
   setupDungeonLoopStart();
-  addStory(
-    "You enter The Shifting Dungeons of Drakkonia with a wood sword, no armor, no shield, and only 5 gold. People in the market whisper that its halls change when they tire of a dying adventurer."
-  );
-  addStory(
-    "No two descents are quite the same, yet the dungeon remembers what was truly lost. Major monsters stay dead, spent treasure stays gone, and only lesser pests creep back through the shifting halls."
-  );
+  setupLanguageToggle();
+  addStory(t("messages.introOne"));
+  addStory(t("messages.introTwo"));
   clearDeathNotice();
   resetWallHits();
   refreshHeroPortrait();
