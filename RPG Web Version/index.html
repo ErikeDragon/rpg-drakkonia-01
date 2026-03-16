@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Shifting Dungeons of Drakkonia</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="title-panel">
+        <p class="eyebrow">Old School Top-Down RPG Prototype</p>
+        <h1>The Shifting Dungeons of Drakkonia</h1>
+        <p class="byline">by Erik "eDragon" Lingerfelt</p>
+        <p class="subtitle">
+          Descend through a haunted, shifting ruin beneath Drakkonia, survive the maze,
+          and reach the stair to level 2.
+        </p>
+      </section>
+
+      <section class="hud" aria-label="Player status">
+        <div class="stat-card">
+          <span class="label">HP</span>
+          <strong id="hpValue">12 / 12</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Gold</span>
+          <strong id="goldValue">5</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Weapon</span>
+          <strong id="weaponValue">Wood Sword</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Armor</span>
+          <strong id="armorValue">None</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Shield</span>
+          <strong id="shieldValue">None</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Level</span>
+          <strong id="levelValue">1 · 0 / 10 XP</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Depth</span>
+          <strong id="depthValue">Level 1</strong>
+        </div>
+      </section>
+
+      <section class="play-layout">
+        <section class="story-panel">
+          <div class="story-header">
+            <div>
+              <p class="eyebrow">Story Log</p>
+              <h2>Level 1: The Shifting Halls</h2>
+            </div>
+            <p class="story-tip" id="storyTip">
+              You only interact when you step onto the same tile as something.
+            </p>
+          </div>
+
+          <p id="deathNotice" class="death-notice" role="alert" aria-live="assertive"></p>
+
+          <section class="portrait-panel" aria-label="Current encounter display">
+            <article class="portrait-card">
+              <p class="portrait-label">Hero</p>
+              <div class="portrait-frame">
+                <img id="heroPortrait" src="assets/sprites/hero.webp" alt="Hero portrait" />
+              </div>
+              <strong class="portrait-name">Adventurer</strong>
+            </article>
+
+            <article class="portrait-card">
+              <p class="portrait-label" id="encounterLabel">Area</p>
+              <div class="portrait-frame">
+                <img id="encounterPortrait" alt="Current encounter portrait" />
+                <div id="encounterFallback" class="portrait-fallback">Quiet Hall</div>
+              </div>
+              <strong class="portrait-name" id="encounterName">Quiet Hall</strong>
+            </article>
+          </section>
+
+          <div id="actionArea" class="action-area" aria-live="polite"></div>
+          <ol id="storyLog" class="story-log" aria-live="polite"></ol>
+        </section>
+
+        <section class="game-layout">
+          <div class="canvas-frame">
+            <canvas
+              id="gameCanvas"
+              width="928"
+              height="736"
+              aria-label="Dungeon map"
+            ></canvas>
+          </div>
+
+          <aside class="legend">
+            <h2>Controls</h2>
+            <p>`W A S D` to move</p>
+            <p>`F` fight, `R` retreat during encounters</p>
+            <p>Step onto a tile to interact</p>
+            <button id="musicToggle" class="legend-button" type="button">Mute Music</button>
+            <h2>Map Key</h2>
+            <ul>
+              <li><span class="swatch wall"></span> Wall</li>
+              <li><span class="swatch floor"></span> Floor</li>
+              <li><span class="swatch market"></span> Market / Vendor</li>
+              <li><span class="swatch enemy"></span> Enemy</li>
+              <li><span class="swatch treasure"></span> Treasure</li>
+              <li><span class="swatch stairs"></span> Stairs to level 2</li>
+            </ul>
+          </aside>
+        </section>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
